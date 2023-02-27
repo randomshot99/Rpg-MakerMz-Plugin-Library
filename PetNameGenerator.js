@@ -1,7 +1,7 @@
 
  //-----------------------------------------------------------------------------
 /*:
- * @plugindesc Choose pet names from an Array.
+ * @plugindesc (v.1.0) Choose pet names from an Array.
  * @url
  * @target MZ
  * @author James Chadwick
