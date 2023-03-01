@@ -1,111 +1,128 @@
-
+ 
+ 
+ var RandomShot = RandomShot || {};          
+ RandomShot.PNG = RandomShot.PNG || {};    
+ RandomShot.PNG.pluginName = "PetNameGenerator";
+ 
  //-----------------------------------------------------------------------------
 /*:
  * @plugindesc (v.1.0) Choose pet names from an Array.
- * @url
  * @target MZ
  * @author James Chadwick
  *
- * @param petNameArray
- * @text Pet Name Array
- * @type text[]
- * @desc array of pet names
- * @default ['example 1','example 2','example 3']
+ * @param PetNames:struct
+ * @text Pet Names Arrays
+ * @type struct<PetNames>[] 
+ *  
  * 
- * @param variableLocation
- * @text Variable Location
- * @type number
- * @desc Select which variable slot to store data to
- * @default 1
  * 
- * @param specificName
- * @text Specific Name
- * @type number
- * @desc Select specific Pet name index
- * @default 1
- * 
- *
- *--------------------------------------------------------------
-
  * @command RandomName
  * @text Random Name 
  * @desc Pick a random name from an array
- *
- * @arg nameArray
- * @type text[]
- * @default []
- * @text Input Array
- * @desc Array of names to choose from
- *
- * @arg variableLoc
- * @default 1
- * @text Variable Location
- * @desc Select witch variable slot to store data to
  * 
+ * @arg ListTitle
+ * @text List Title
+ * @type text
+ * @default Name of List
+ * @desc Select which pet name list to use
+ * 
+ * @arg VariableNum
+ * @text Variable Number
+ * @type number
+ * @default 1
+ * @desc Select where to save data
  * --------------------------------------------------------------------------
  * 
  * @command SpecificName
  * @text Specific Name 
  * @desc Pick a specific name from an array
- *
- * @arg nameArray
- * @type text[]
- * @default []
- * @text Input Array
- * @desc Array of names to choose from
- *
- * @arg variableLoc
- * @type number
- * @default 1
- * @text Variable Location
- * @desc Select which variable slot to store data to
  * 
- * @arg index
+ * @arg ListTitle
+ * @text List Title
+ * @type text
+ * @default Name of List
+ * @desc Select which pet name list to use
+ * 
+ * @arg VariableNum
+ * @text Variable Number
  * @type number
  * @default 1
- * @text  Array Index 
- * @desc Select which member of the array to use
- *
+ * @desc Select where to save data
+ * 
+ * @arg NameIndex
+ * @text Name Index
+ * @type number
+ * @default 0
+ * @desc Select which name to call. Array starts at 0
+ * 
+ * 
  * 
  */
- const pluginName = 'PetNameGenerator';
- const PetNameArray = PluginManager.parameters(pluginName)['petNameArray'];
- const variableNum = PluginManager.parameters(pluginName)['variableLocation'];
- const arrayIndex = PluginManager.parameters(pluginName)['specificName'];
+/*~struct~PetNames:
+ *
+ * @param Names
+ * @text Names
+ * @type text[]
+ * 
+ * @param VariableLocation
+ * @text Variable Number
+ * @type number
+ * @min 1
+ * @default 1
+ * @desc Select which variable slot to store data to
+ * 
+ * @param ListTitle
+ * @text List Title
+ * @type text
+ * @desc Title of List use for recall. Must be Unique
+ *
+*/
 
-PluginManager.registerCommand(pluginName, "RandomName", args => {
-    const inputArray = JSON.parse(PetNameArray);
-    RandomName(inputArray,variableNum);
+// generat an array filled with JSON objects
+RandomShot.PNG.Settings= JSON.parse(PluginManager.parameters(RandomShot.PNG.pluginName)['PetNames:struct']);
 
 
-});
-PluginManager.registerCommand(pluginName, "SpecificName", args => {
-    const inputArray = JSON.parse(PetNameArray);
-    SpecificName(inputArray,arrayIndex,variableNum);
+RandomShot.PNG.ParseArray= function(){
+    let values=[];
+    for(let obj in RandomShot.PNG.Settings ){
+        
+        let key = JSON.parse(RandomShot.PNG.Settings[obj]);
+        console.log(RandomShot.PNG.Settings[obj])
+        values[key.ListTitle] = JSON.parse(key.Names);
+        console.log(key.ListTitle);
+        
+    }
+    return values;
+
+}
+RandomShot.PNG.Lists=RandomShot.PNG.ParseArray();
+
+PluginManager.registerCommand(RandomShot.PNG.pluginName, "RandomName", args => {
+    const listTitle = args.ListTitle;
+    const variableNum =args.VariableNum;
+    $gameVariables.setValue(variableNum, RandomShot.PNG.RandomName(listTitle)); 
+})
+PluginManager.registerCommand(RandomShot.PNG.pluginName, "SpecificName", args => {
+    $gameVariables.setValue (args.VariableNum, RandomShot.PNG.SpecificName(args.ListTitle, parseInt(args.NameIndex)));
+    
 })
 
-
-
-    function RandomName (inputArray=[],gameVarIndex){
+  
+    RandomShot.PNG.RandomName = function (listTitle){
         // generate a random number which legenth will be between 0 and the imput arry max entry.
-        let rng = Math.floor(Math.random() * inputArray.length) ;
+        let rng = Math.floor(Math.random() * RandomShot.PNG.Lists[listTitle].length) ;
         //set a variable to the randomly selected entry
-        let petName= inputArray[rng];
-        // set game Variable with the radomly selected entry at the desired index.
-        $gameVariables.setValue(gameVarIndex,petName); 
+        return  RandomShot.PNG.Lists[listTitle][rng];
     }
 
-     function SpecificName (inputArray=[], value,gameVarIndex){
-         // check if the value given is within the size of the array
-        if(value >=0 && value <=inputArray.length-1){
-            // if the value is within the array set game variable with the selected entry from the array at the desired index
-            let petName = inputArray[value];
-                        $gameVariables.setValue(gameVarIndex,petName);
-     
-        }else{
-            $gameVariables.setValue(gameVarIndex,'I am Broken');
-            console.log("error value is out side the bounds of the array");
-                } 
+    RandomShot.PNG.SpecificName= function (listTitle,value){
+            return RandomShot.PNG.Lists[listTitle][value];
+     }
+
+     RandomShot.PNG.DejsonFunction = function(jsonInput){
+        // take in an json structure and out put an js object
+        let jsArray = JSON.parse(jsonInput);
+        return jsArray;
      }
 
 
